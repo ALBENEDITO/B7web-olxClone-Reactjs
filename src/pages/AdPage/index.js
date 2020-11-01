@@ -1,12 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
 import { Slide } from 'react-slideshow-image';
-import { PageArea, Fake } from './styled';
+import { PageArea, Fake, OthersArea, BreadChumb} from './styled';
 import 'react-slideshow-image/dist/styles.css';
 
 import useApi from '../../helpers/OlxAPI';
 import { PageContainer } from '../../components/MainComponents';
-
+import AdItem from '../../components/partials/AdItem';
 const Page = () => {
 
     const api = useApi();
@@ -39,6 +39,17 @@ const Page = () => {
 
     return (
         <PageContainer>
+            {adInfo.category && 
+                <BreadChumb>
+                    Você está aqui:
+                    <Link to="/">Home</Link>
+                    /
+                    <Link to={`/ads?state=${adInfo.stateName}`}>{adInfo.stateName}</Link>
+                    /
+                    <Link to={`/ads?state=${adInfo.stateName}&cat=${adInfo.category.slug}`}>{adInfo.category.name}</Link>
+                    / {adInfo.title}
+                </BreadChumb>
+            }
             <PageArea>
                 <div className="leftSide">
                     <div className="box">
@@ -78,13 +89,40 @@ const Page = () => {
                 <div className="rightSide">
                     <div className ="box box--padding">
                         {loading &&<Fake height={20} />}
+                        {adInfo.priceNegotiable &&
+                            "Preço Negociável"
+                        }
+                        {!adInfo.priceNegotiable && adInfo.price &&
+                            <div className="price">Preço: <span>R$ {adInfo.price}</span></div>
+                        }
                     </div>
-                    <div className ="box box--padding">
-                        {loading &&<Fake height={50} />}
-                    </div>
+                    {loading &&<Fake height={50} />}
+                    {adInfo.userInfo &&
+                        <>
+                            <a href={`mailto:${adInfo.userInfo.email}`} target="_blank" className="contactSellerLink">Fale com o Vendedor</a>
+                            <div className="createdBy box box--padding">
+                                Criado por:
+                                <strong>{adInfo.userInfo.name}</strong>
+                                <small>Email: {adInfo.userInfo.email}</small>
+                                <small>Estado: {adInfo.stateName}</small>
+                            </div>
+                        </>        
+                    }
                 </div>
 
             </PageArea>
+            <OthersArea>
+                {adInfo.others &&
+                    <>
+                        <h2>Outras Ofertas do Vendedor</h2>
+                        <div className="list">
+                            {adInfo.others.map((i,key)=>
+                                <AdItem key={key} data={i} />
+                            )}
+                        </div>
+                    </>
+                }
+            </OthersArea>
         </PageContainer>
     );
 }
