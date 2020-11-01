@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Slide } from 'react-slideshow-image';
-import { PageArea, Fake, OthersArea, BreadChumb} from './styled';
+import { PageArea, Fake, OthersArea, BreadChumb } from './styled';
 import 'react-slideshow-image/dist/styles.css';
 
 import useApi from '../../helpers/OlxAPI';
@@ -15,7 +15,7 @@ const Page = () => {
     const [loading, setLoading] = useState(true);
     const [adInfo, setAdInfo] = useState([]);
 
-    useEffect(()=>{
+    useEffect(() => {
         const getAdInfo = async (id) => {
             const json = await api.getAd(id, true);
             setAdInfo(json);
@@ -24,10 +24,10 @@ const Page = () => {
         getAdInfo(id);
     }, []);
 
-    const  formatData = (date) => {
+    const formatData = (date) => {
         let cDate = new Date(date);
 
-        let months = ['janeiro', 'fevereiro','março','abril', 'maio', 'junho', 'julho', 'agosto', 'setembro', 'novembro', 'dezembro'];
+        let months = ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro', 'novembro', 'dezembro'];
         let cDay = cDate.getDate();
         let cMonth = cDate.getMonth();
         let cYear = cDate.getFullYear();
