@@ -1,17 +1,23 @@
-import React, { useState, useRef} from 'react';
+import React, { useState, useRef, useEffect} from 'react';
+import { useHistory } from 'react-router-dom';
+import MaskedInput from 'react-text-mask';
+import createNumberMask from 'text-mask-addons/dist/createNumberMask';
+
 import { PageArea} from './styled';
 import useApi from '../../helpers/OlxAPI';
-import { doLogin } from '../../helpers/AuthHandler';
+
 import {PageContainer, PageTitle, ErrorMessage } from '../../components/MainComponents';
 
 const Page = () => {
 
     const api = useApi();
     const fileField = useRef();
-
+    const history = useHistory();
     
+    const [categories, setCategories] = useState('');
+
     const [title, setTitle] = useState('');
-    const [category, setCategory] = useState('');
+    const [category,  setCategory] = useState('');
     const [price, setPrice] = useState('');
     const [priceNegotiable, setPriceNegotiable] = useState('');
     const [desc, setDesc] = useState('');
@@ -19,22 +25,61 @@ const Page = () => {
     const [disabled, setDisabled] = useState('');
     const [error, setError] = useState('');
 
+    useEffect(()=>{
+        const getCategories = async () => { 
+            const cats = await api.getCategories();
+            setCategories(cats); 
+        }
+        getCategories();
+    }, []);
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         setDisabled(true);
         setError('');
+        let errors = [];
 
-        // const json = await api.login(email, password);
+        if(!title.trim()) {
+            errors.push('Preencha o Título');
+        }
+        if(!category) {
+            errors.push('Escolha a categoria');
+        }
 
-        // if(json.error) {
-        //     setError(json.error);        
-        // } else {
-        //     doLogin(json.token, rememberPassword);  
-        //     window.location.href ='/';           
-        // }
+        if(errors.length === 0) {
+             const fData = new FormData();
+             fData.append('title',title);
+             fData.append('price',price);
+             fData.append('priceneg',priceNegotiable);
+             fData.append('desc',desc);
+             fData.append('cat',category);
 
-        setDisabled(false);
+             if(fileField.current.files.length >0) {
+                 for(let i=0;i<fileField.current.files.length;i++) {
+                     fData.append('img', fileField.current.files[i]);
+                 }
+             }
+
+             const json = await api.addAd(fData);
+
+             if(!json.error) {
+                history.push(`/ad/${json.id}`);
+                return;
+             } else {
+                 setError(json.error);
+             }
+        } else {
+            setError(errors.join("\n"));
+        }
     }
+
+    const priceMask = createNumberMask({
+        prefix:'R$ ',
+        includeThousandsSeparator:true,
+        thousandsSeparatorSymbol:'.',
+        allowDecimal:true,
+        decimalSymbol:','
+    })
  
     return (
         <PageContainer>
@@ -65,7 +110,17 @@ const Page = () => {
                                 Categoria
                             </div>
                             <div className="area--input">
-                                <select></select>
+                                <select 
+                                    disabled={disabled}
+                                    onChange={e=>setCategory(e.target.value)}
+                                    required
+                                >
+                                    <option></option>
+                                    {categories && categories.map(i=>
+                                         <option key={i._id} value={i._id}>{i.name}</option>
+                                     )}
+                                </select>
+
                             </div>
                         </label>
                         <label className="area">
@@ -73,7 +128,14 @@ const Page = () => {
                                 Price
                             </div>
                             <div className="area--input">
-                                ...     
+                                <MaskedInput 
+                                    mask={priceMask}
+                                    placeholder="R$ "
+                                    disabled={disabled || priceNegotiable}
+                                    value={price}
+                                    onChange={e=>setPrice(e.target.value)}
+                                />
+
                             </div>
                         </label>
                         <label className="area">
