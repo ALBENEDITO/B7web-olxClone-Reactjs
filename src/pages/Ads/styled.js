@@ -58,5 +58,43 @@ margin-top:20px;
 
 .rightSide {
     flex:1;
+    
+    h2 {
+        margin-top:0;
+        font-size:18px;
+    }
+
+    .listWarning {
+         padding:20px;
+         text-align:center;
+    }
+
+    .list {
+        display:flex;
+        flex-wrap:wrap;
+
+        .aditem {
+            width:33%;
+        }
+    }
+
+    .pagination {
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        margin:10px;
+
+        .pagItem {
+            width:30px;
+            height:30px;
+            border:1px solid #000;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            font-size:14px;
+            margin-right:5px;
+        }
+
+    }
 }
 `;

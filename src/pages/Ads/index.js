@@ -6,9 +6,13 @@ import useApi from '../../helpers/OlxAPI';
 import { PageContainer } from '../../components/MainComponents';
 import AdItem from '../../components/partials/AdItem';
 
+let timer;
+
 const Page = () => {
 
     const api = useApi();
+    const history = useHistory();
+    
 
     const useQueryString = () => {
         return new URLSearchParams (useLocation().search );
@@ -19,10 +23,61 @@ const Page = () => {
     const [cat, setCat] = useState(query.get('cat') != null ? query.get('cat') : '' );
     const [state, setState] = useState(query.get('state') != null ? query.get('state') : '' );
 
-
+    const [adsTotal, setAdsTotal] = useState(0);
     const [statelist, setStateList] = useState([]);
     const [categories, setCategories] = useState([]);
     const [adList, setAdList] = useState([]);
+    const [pageCount, setPageCount] = useState(0);  
+    
+    const [resultOpacity, setResultOpacity] = useState(1);
+    const [loading, setLoading] = useState(true); 
+
+
+    const getAdsList = async () => {
+        setLoading(true);
+        const json = await api.getAds({
+            sort: 'desc',
+            limit: 9,
+            q,
+            cat,
+            state
+        });
+        setAdList(json.ads);
+        setAdsTotal(json.total);
+        setResultOpacity(1);
+        setLoading(false);
+    }
+
+    useEffect(() => {
+        if(adList.length > 0) {
+        setPageCount( Math.ceil(adsTotal / adList.length));
+        } else {
+            setPageCount (0);
+        }
+    }, [adsTotal]);
+
+    useEffect(() => {
+        let queryString = [];
+        if(q) {
+            queryString.push(`q=${q}`);
+        }
+        if(cat) {
+            queryString.push(`cat=${cat}`);
+        }
+        if(state) {
+            queryString.push(`state=${state}`);
+        }
+        
+        history.replace({
+            search:`?${queryString.join('&')}`
+        });  
+
+        if(timer){
+            clearTimeout(timer);
+        }
+        timer= setTimeout(getAdsList, 2000);
+        setResultOpacity(0.3);
+    }, [q, cat, state]);
 
     useEffect(() => {
         const getState = async () => {
@@ -51,26 +106,41 @@ const Page = () => {
         getRecentAds();
     }, []);
 
+    let pagination = [];
+    for(let i=1;i<=pageCount;i++) {
+        pagination.push(i); 
+    }
+
     return (
         <PageContainer>
             <PageArea>
                 <div className="leftSide">
                     <form method="GET">
-                        <input type="text" name="q" value={q} placeholder="Pesquisar" />
+                        <input 
+                            type="text" 
+                            name="q" 
+                            value={q} 
+                            placeholder="Pesquisar" 
+                            onChange={e=>setQ(e.target.value)}
+                        />
 
                         <div className="filterName">Estado:</div>
-                        <select name="state" value={state}>
+                        <select name="state" value={state} onChange={e=>setState(e.target.value)}>
                             <option></option>
                             {statelist.map((i,key)=>
-                                <option key={key} value={i.name}>{i.name}</option>
+                                <option key={key} value={i.name} >{i.name}</option>
                             )}
                         </select>
 
                         <div className="filterName">Categoria:</div>
                         <ul>
                             {categories.map((i,key)=>
-                                <li key={key} className={cat==i.slug?'categoryItem active':'categoryItem'}>
-                                    <img src={i.img} alt="" />
+                                <li 
+                                    key={key} 
+                                    className={cat==i.slug?'categoryItem active':'categoryItem'}
+                                    onClick={()=>setCat(i.slug)} 
+                                >
+                                    <img src={i.img} alt=""/>
                                     <span>{i.name}</span>
                                 </li>
                             )}
@@ -78,7 +148,25 @@ const Page = () => {
                     </form>
                 </div>
                 <div className="rightSide">
-                    ...
+                    <h2>Resultados</h2>
+                    {loading &&
+                        <div className="listWarning">Carregando...</div>       
+                    }
+                    {!loading && adList.length === 0 &&
+                        <div className="listWarning">Não encontrado resultados.</div>
+                    }    
+
+                    <div className="list" style={{opacity:resultOpacity}} >
+                        {adList.map((i, key)=>
+                            <AdItem key={key} data={i} />
+                        )}
+                    </div>
+                    <div className="pagination">
+                        {pagination.map((i,key)=>
+                         <div className="pagItem">{i}</div>
+                        )}
+                    </div>
+
                 </div>
             </PageArea>
         </PageContainer>
