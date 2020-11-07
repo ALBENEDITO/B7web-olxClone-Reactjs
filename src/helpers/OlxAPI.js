@@ -108,6 +108,16 @@ const OlxAPI = {
         return json.categories;
     },
 
+    getUserMe:async () => {
+
+        let token = Cookies.get('token');
+        const json = await apiFetchGet(
+            '/user/me',
+            {token}
+        );
+        return json;
+    },
+
     getAds:async (options) => {
         const json = await apiFetchGet(
             '/ad/list',
